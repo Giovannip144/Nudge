@@ -43,7 +43,7 @@ export default async function AppLayout({
 
       {/* Trial banner — last 7 days, non-blocking */}
       {subStatus === "trialing" && daysLeft <= 7 && !showPaywall && (
-        <TrialBanner daysLeft={daysLeft} />
+        <TrialBanner daysLeft={daysLeft} status={subStatus}/>
       )}
 
       <div className="flex flex-1 overflow-hidden">
