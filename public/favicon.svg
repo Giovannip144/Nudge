@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a17"/>
+      <stop offset="100%" stop-color="#0e0e0c"/>
+    </linearGradient>
+    <linearGradient id="dot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a8f07a"/>
+      <stop offset="100%" stop-color="#7af0b8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
+
+  <!-- Subtle inner border -->
+  <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Letter n — Fraunces-style serif -->
+  <text
+    x="5"
+    y="24"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="21"
+    font-weight="700"
+    font-style="italic"
+    fill="#f0ebe0"
+    letter-spacing="-1"
+  >n</text>
+
+  <!-- Green accent dot -->
+  <circle cx="26" cy="23" r="3.5" fill="url(#dot)"/>
+
+  <!-- Subtle glow behind dot -->
+  <circle cx="26" cy="23" r="5.5" fill="rgba(168,240,122,0.15)"/>
+  <circle cx="26" cy="23" r="3.5" fill="url(#dot)"/>
+</svg>

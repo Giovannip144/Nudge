@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/cron/daily-scan",    "schedule": "30 6 * * *"   },
+    { "path": "/api/cron/morning-nudge", "schedule": "30 8 * * 1-5" },
+    { "path": "/api/cron/sunday-digest", "schedule": "0 10 * * 0"   },
+    { "path": "/api/cron/trial-check",   "schedule": "0 9 * * *"    }
+  ]
+}
