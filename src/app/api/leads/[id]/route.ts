@@ -44,7 +44,7 @@ export async function PATCH(
 
   // Sanitise — only allow known fields
   const allowed: UpdateLeadInput = {};
-  if (body.name !== undefined)           allowed.name = body.name.trim();
+  if (body.name !== undefined)           allowed.name = body.name?.trim() ;
   if (body.email !== undefined)          allowed.email = body.email?.trim() || undefined;
   if (body.note !== undefined)           allowed.note = body.note?.trim() || undefined;
   if (body.status !== undefined)         allowed.status = body.status;

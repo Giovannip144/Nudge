@@ -68,7 +68,7 @@ export interface CreateLeadInput {
 }
 
 export interface UpdateLeadInput {
-  name?:string | null;
+  name?: string;
   email?: string | null;
   note?: string | null;
   status?: LeadStatus;
