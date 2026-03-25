@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
         if (profile) {
           await supabase.from("profiles").update({ stripe_subscription_status: "past_due" }).eq("id", profile.id);
-          if (profile.email) await sendPaymentFailedEmail(profile.email, profile.full_name ?? "there", 1).catch(console.error);
+          if (profile.email) await sendPaymentFailedEmail(profile.email, profile.full_name ?? "there", "1").catch(console.error);
         }
         break;
       }
