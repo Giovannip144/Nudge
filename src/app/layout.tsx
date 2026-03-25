@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Nudge — Your AI client memory",
+  title: "Nudge | Your AI client memory for freelancers",
   description:
     "Stop losing clients to forgotten follow-ups. Nudge tells you exactly who to reach out to — and why — every morning.",
   openGraph: {
