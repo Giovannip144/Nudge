@@ -4,7 +4,7 @@
 
 // ─── Database row types (mirror Supabase schema) ──────────────
 
-export type LeadStatus = "new" | "active" | "warm" | "won" | "paused" | "lost";
+export type LeadStatus = "new" | "active" | "warm" | "won" | "paused" | "lost" | "urgent";
 export type NotificationChannel = "email" | "whatsapp";
 export type UserTier = "free" | "starter" | "pro";
 export type NudgeType = "daily" | "weekly";
@@ -43,6 +43,7 @@ export interface Lead {
   updated_at: string;
 }
 
+
 export interface NudgeLog {
   id: string;
   user_id: string;
@@ -67,14 +68,15 @@ export interface CreateLeadInput {
 }
 
 export interface UpdateLeadInput {
-  name?: string;
-  email?: string;
-  note?: string;
+  name?:string | null;
+  email?: string | null;
+  note?: string | null;
   status?: LeadStatus;
-  last_contact_at?: string;
+  last_contact_at?: string | null;
   snooze_until?: string | null;
   nudge_active?: boolean;
 }
+
 
 export interface UpdateProfileInput {
   full_name?: string;
