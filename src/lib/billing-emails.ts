@@ -16,7 +16,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
 
 function wrap(accent: string, content: string) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#0c0c0a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#0c0c0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0c0c0a;padding:40px 20px;">
 <tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
   <tr><td style="padding-bottom:24px;"><span style="font-size:22px;font-weight:900;color:#f0ebe0;">nudge<span style="color:${accent};">.</span></span></td></tr>
