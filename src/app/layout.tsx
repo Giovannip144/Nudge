@@ -1,5 +1,28 @@
 import type { Metadata } from "next";
+import { Fraunces, DM_Sans, DM_Mono } from "next/font/google";
 import "@/styles/globals.css";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Nudge | Your AI client memory for freelancers",
@@ -18,17 +41,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fraunces.variable} ${dmSans.variable} ${dmMono.variable}`}>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
-<meta name="theme-color" content="#0c0c0a" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+        <meta name="theme-color" content="#0c0c0a" />
       </head>
       <body>{children}</body>
     </html>
