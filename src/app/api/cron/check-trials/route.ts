@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   sendTrialEndingSoonEmail,
-  // sendTrialExpiredEmail,
 } from "@/lib/billing-emails";
 
 /**
@@ -90,7 +89,6 @@ export async function GET(request: NextRequest) {
     // Send expired email only once
     if (!user.pause_notified_at && user.email) {
       try {
-        // await sendTrialExpiredEmail(user.email, user.full_name ?? "there");
         await supabase
           .from("profiles")
           .update({ pause_notified_at: nowStr })
