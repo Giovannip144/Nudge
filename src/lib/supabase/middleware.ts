@@ -38,9 +38,10 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = url.pathname.startsWith("/login");
   const isApiRoute = url.pathname.startsWith("/api");
   const isPublicRoute = url.pathname === "/";
+  const isCallbackRoute = url.pathname.startsWith("/auth/callback");
 
   // Unauthenticated user trying to access protected route → redirect to login
-  if (!user && !isAuthRoute && !isApiRoute && !isPublicRoute) {
+  if (!user && !isAuthRoute && !isApiRoute && !isPublicRoute && !isCallbackRoute) {
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
