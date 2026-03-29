@@ -4,7 +4,8 @@
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
       "Bash(find /c/Users/giovanni/OneDrive - Onderwijsgroep Tilburg/Bureaublad/nudge -name *.sql -type f)",
-      "Bash(grep -r last_contact_at /c/Users/giovanni/OneDrive - Onderwijsgroep Tilburg/Bureaublad/nudge/src --include=*.ts --include=*.tsx)"
+      "Bash(grep -r last_contact_at /c/Users/giovanni/OneDrive - Onderwijsgroep Tilburg/Bureaublad/nudge/src --include=*.ts --include=*.tsx)",
+      "Bash(npx next:*)"
     ]
   }
 }

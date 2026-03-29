@@ -140,7 +140,10 @@ export async function getConversationContext(
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  if (!listRes.ok) return { snippets: [], threadCount: 0 };
+  if (!listRes.ok) {
+    if (listRes.status === 401) throw new Error("GMAIL_UNAUTHORIZED");
+    return { snippets: [], threadCount: 0 };
+  }
 
   const listData = await listRes.json();
   if (!listData.messages?.length) return { snippets: [], threadCount: 0 };
