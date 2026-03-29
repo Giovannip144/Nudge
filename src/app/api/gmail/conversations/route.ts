@@ -45,12 +45,22 @@ export async function GET(request: NextRequest) {
     const context = await getConversationContext(accessToken, lead.email, 5)
       .catch(async (err) => {
         if (err.message === "GMAIL_UNAUTHORIZED" && profile.gmail_refresh_token) {
-          accessToken = await refreshAccessToken(profile.gmail_refresh_token);
-          await supabase.from("profiles").update({ gmail_access_token: accessToken }).eq("id", user.id);
-          return getConversationContext(accessToken, lead.email!, 5);
+          try {
+            accessToken = await refreshAccessToken(profile.gmail_refresh_token);
+            await supabase.from("profiles").update({ gmail_access_token: accessToken }).eq("id", user.id);
+            return getConversationContext(accessToken, lead.email!, 5);
+          } catch {
+            // Refresh token also expired — disconnect Gmail so user knows to reconnect
+            await supabase.from("profiles").update({ gmail_connected: false }).eq("id", user.id);
+            return null; // signal token expired
+          }
         }
         throw err;
       });
+
+    if (context === null) {
+      return NextResponse.json({ snippets: [], reason: "gmail_token_expired" });
+    }
 
     return NextResponse.json({
       leadName:    lead.name,

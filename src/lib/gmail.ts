@@ -34,7 +34,7 @@ export interface ConversationSnippet {
 export function buildGmailAuthUrl(userId: string): string {
   const params = new URLSearchParams({
     client_id:     process.env.GOOGLE_CLIENT_ID!,
-    redirect_uri:  `${process.env.NEXT_PUBLIC_APP_URL}/api/gmail/callback`,
+    redirect_uri:  `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/api/gmail/callback`,
     response_type: "code",
     scope:         "https://www.googleapis.com/auth/gmail.readonly",
     access_type:   "offline",
@@ -53,7 +53,7 @@ export async function exchangeCodeForTokens(code: string): Promise<GmailTokens> 
       code,
       client_id:     process.env.GOOGLE_CLIENT_ID!,
       client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      redirect_uri:  `${process.env.NEXT_PUBLIC_APP_URL}/api/gmail/callback`,
+      redirect_uri:  `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/api/gmail/callback`,
       grant_type:    "authorization_code",
     }),
   });

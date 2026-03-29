@@ -278,7 +278,11 @@ export function DetailPanel({ lead, onClose, onUpdate, onDelete, onStatusChange,
             )}
 
             {convReason === "gmail_not_connected" && (
-              <p className="text-[12px]" style={{ color: "var(--muted)" }}>Gmail not connected. Go to Settings to connect.</p>
+              <p className="text-[12px]" style={{ color: "var(--muted)" }}>Gmail not connected. Go to <a href="/settings" style={{ color: "var(--accent)", textDecoration: "underline" }}>Settings</a> to connect.</p>
+            )}
+
+            {convReason === "gmail_token_expired" && (
+              <p className="text-[12px]" style={{ color: "var(--amber)" }}>Gmail access expired. Go to <a href="/settings" style={{ color: "var(--accent)", textDecoration: "underline" }}>Settings</a> and reconnect Gmail.</p>
             )}
 
             {convSnippets !== null && convSnippets.length === 0 && (
