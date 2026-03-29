@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { GmailConnectButton } from "@/components/inbox/GmailConnectButton";
-import { PhoneUpdateForm } from "@/components/inbox/PhoneUpdateForm";
+import { ChannelSettings } from "@/components/inbox/ChannelSettings";
 
 interface Props {
   searchParams: Promise<{ gmail?: string }>;
@@ -84,10 +84,11 @@ export default async function SettingsPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* WhatsApp phone number — shown when channel is whatsapp */}
-      {profile?.channel === "whatsapp" && (
-        <PhoneUpdateForm currentPhone={profile?.phone ?? ""} />
-      )}
+      {/* Notification channel — email or WhatsApp */}
+      <ChannelSettings
+        currentChannel={(profile?.channel as "email" | "whatsapp") ?? "email"}
+        currentPhone={profile?.phone ?? ""}
+      />
 
       {/* Lead usage */}
       <div className="rounded-xl p-4 mb-6" style={{ background:"var(--bg2)", border:"1px solid var(--border)" }}>

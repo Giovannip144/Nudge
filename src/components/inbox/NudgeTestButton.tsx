@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export function NudgeTestButton() {
   const [loading,  setLoading]  = useState(false);
-  const [preview,  setPreview]  = useState<null | { lead: string; subject: string; message: string; urgency: string }>(null);
+  const [preview,  setPreview]  = useState<null | { lead: string; subject: string; message: string; urgency: string; contextual?: boolean }>(null);
   const [sending,  setSending]  = useState(false);
   const [sent,     setSent]     = useState(false);
   const [error,    setError]    = useState<string | null>(null);
@@ -123,6 +123,9 @@ export function NudgeTestButton() {
           </p>
           <p className="text-[13px] leading-relaxed" style={{ color: "var(--text)" }}>
             {preview.message}
+          </p>
+          <p className="text-[10px] mt-2" style={{ color: preview.contextual ? "var(--accent)" : "var(--muted)" }}>
+            {preview.contextual ? "📧 Based on real Gmail conversations" : "📝 Based on note only — connect Gmail for richer nudges"}
           </p>
         </div>
       )}

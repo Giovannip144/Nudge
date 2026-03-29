@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { getInitials, getAvatarColor, relativeTime, daysSince } from "@/lib/utils";
 import type { Lead, LeadStatus } from "@/types";
 
+interface ConversationSnippet {
+  date: string;
+  direction: "sent" | "received";
+  snippet: string;
+}
+
 const STATUS_OPTIONS: { value: LeadStatus; label: string; icon: string }[] = [
   { value: "active",  label: "Active",  icon: "🟢" },
   { value: "warm",    label: "Warm",    icon: "🟡" },
@@ -27,12 +33,43 @@ export function DetailPanel({ lead, onClose, onUpdate, onDelete, onStatusChange,
   const [name, setName] = useState(lead?.name ?? "");
   const [editingName, setEditingName] = useState(false);
 
+  const [convLoading,  setConvLoading]  = useState(false);
+  const [convSnippets, setConvSnippets] = useState<ConversationSnippet[] | null>(null);
+  const [convError,    setConvError]    = useState<string | null>(null);
+  const [convReason,   setConvReason]   = useState<string | null>(null);
+
   // Sync when lead changes
   useEffect(() => {
     setNote(lead?.note ?? "");
     setName(lead?.name ?? "");
     setEditingName(false);
+    setConvSnippets(null);
+    setConvError(null);
+    setConvReason(null);
   }, [lead?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadConversations() {
+    if (!lead) return;
+    setConvLoading(true);
+    setConvError(null);
+    setConvSnippets(null);
+    setConvReason(null);
+    try {
+      const res  = await fetch(`/api/gmail/conversations?lead_id=${lead.id}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setConvError(data.error ?? "Failed to load");
+      } else if (data.reason) {
+        setConvReason(data.reason);
+      } else {
+        setConvSnippets(data.snippets ?? []);
+      }
+    } catch {
+      setConvError("Network error");
+    } finally {
+      setConvLoading(false);
+    }
+  }
 
   if (!lead) return null;
 
@@ -199,6 +236,82 @@ export function DetailPanel({ lead, onClose, onUpdate, onDelete, onStatusChange,
                 <strong style={{ color: "var(--text)" }}>Lead added</strong> to inbox
               </TimelineItem>
             </div>
+          </div>
+
+          {/* Gmail conversation history */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10px] font-semibold tracking-[0.15em] uppercase" style={{ color: "var(--muted)" }}>Gmail history</div>
+              {!convSnippets && !convLoading && (
+                <button
+                  onClick={loadConversations}
+                  className="text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all"
+                  style={{ background: "rgba(168,240,122,0.08)", border: "1px solid rgba(168,240,122,0.2)", color: "var(--accent)", cursor: "pointer" }}
+                >
+                  Load
+                </button>
+              )}
+              {convSnippets && (
+                <button
+                  onClick={loadConversations}
+                  className="text-[11px]"
+                  style={{ color: "var(--muted)", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  🔄 Refresh
+                </button>
+              )}
+            </div>
+
+            {convLoading && (
+              <div className="flex items-center gap-2 py-3 text-[12px]" style={{ color: "var(--muted)" }}>
+                <span className="w-3 h-3 rounded-full border-2 animate-spin inline-block" style={{ borderColor: "rgba(168,240,122,0.3)", borderTopColor: "var(--accent)" }} />
+                Fetching from Gmail…
+              </div>
+            )}
+
+            {convError && (
+              <p className="text-[12px]" style={{ color: "var(--red)" }}>❌ {convError}</p>
+            )}
+
+            {convReason === "no_email" && (
+              <p className="text-[12px]" style={{ color: "var(--muted)" }}>No email address on this lead — add one to enable Gmail history.</p>
+            )}
+
+            {convReason === "gmail_not_connected" && (
+              <p className="text-[12px]" style={{ color: "var(--muted)" }}>Gmail not connected. Go to Settings to connect.</p>
+            )}
+
+            {convSnippets !== null && convSnippets.length === 0 && (
+              <p className="text-[12px]" style={{ color: "var(--muted)" }}>No emails found with this lead in Gmail.</p>
+            )}
+
+            {convSnippets && convSnippets.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {[...convSnippets]
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((s, i) => (
+                    <div
+                      key={i}
+                      className="rounded-lg p-3"
+                      style={{
+                        background: "var(--bg3)",
+                        border: `1px solid ${s.direction === "sent" ? "rgba(168,240,122,0.15)" : "rgba(122,184,240,0.15)"}`,
+                        borderLeft: `3px solid ${s.direction === "sent" ? "var(--accent)" : "var(--blue)"}`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-semibold" style={{ color: s.direction === "sent" ? "var(--accent)" : "var(--blue)" }}>
+                          {s.direction === "sent" ? "↑ You" : "↓ Lead"}
+                        </span>
+                        <span className="text-[10px]" style={{ color: "var(--muted)" }}>{s.date}</span>
+                      </div>
+                      <p className="text-[12px] leading-relaxed" style={{ color: "var(--text)" }}>
+                        {s.snippet}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
 
           {/* Actions */}

@@ -10,6 +10,7 @@ export interface SendNudgeEmailInput {
   userName: string;
   nudge: NudgeMessage;
   nudgeTime: string; // "HH:MM"
+  logId?: string;   // nudge_logs.id — used for follow-up tracking buttons
 }
 
 // ─── Send the daily nudge email ──────────────────────────────
@@ -43,7 +44,7 @@ export async function sendNudgeEmail(input: SendNudgeEmailInput): Promise<void> 
 
 // ─── HTML email template ─────────────────────────────────────
 function buildEmailHtml(input: SendNudgeEmailInput): string {
-  const { userName, nudge } = input;
+  const { userName, nudge, logId } = input;
   const urgencyColor =
     nudge.urgency === "high"   ? "#f07a7a" :
     nudge.urgency === "medium" ? "#f0c97a" : "#a8f07a";
@@ -109,6 +110,39 @@ function buildEmailHtml(input: SendNudgeEmailInput): string {
                       </td>
                     </tr>
                   </table>
+
+                  ${logId ? `
+                  <!-- Follow-up tracking -->
+                  <table cellpadding="0" cellspacing="0" style="margin-top:20px;">
+                    <tr>
+                      <td style="padding-bottom:8px;">
+                        <p style="margin:0;font-size:12px;color:#5a5650;letter-spacing:0.04em;">
+                          Did you reach out to ${nudge.leadName}?
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <table cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td style="padding-right:8px;">
+                              <a href="${process.env.NEXT_PUBLIC_APP_URL}/api/nudge/followup?log_id=${logId}&response=yes"
+                                 style="display:inline-block;padding:8px 16px;font-size:12px;font-weight:600;color:#0c0c0a;background:#a8f07a;border-radius:6px;text-decoration:none;">
+                                Yes, I did
+                              </a>
+                            </td>
+                            <td>
+                              <a href="${process.env.NEXT_PUBLIC_APP_URL}/api/nudge/followup?log_id=${logId}&response=no"
+                                 style="display:inline-block;padding:8px 16px;font-size:12px;font-weight:600;color:#d0cab8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;text-decoration:none;">
+                                Not yet
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                  ` : ""}
 
                 </td>
               </tr>

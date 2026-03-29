@@ -280,6 +280,26 @@ alter table public.profiles
   add column if not exists subscription_paused_at     timestamptz,
   add column if not exists pause_notified_at          timestamptz;
 
+-- ══════════════════════════════════════════════════════════════
+-- BEHAVIORAL TRACKING — Follow-up tracking per nudge
+-- Run this in Supabase SQL Editor
+-- ══════════════════════════════════════════════════════════════
+
+alter table public.nudge_logs
+  add column if not exists followed_up        boolean,
+  add column if not exists followed_up_at     timestamptz,
+  add column if not exists follow_up_source   text check (follow_up_source in ('manual', 'auto'));
+
+-- Allow the API route to update follow-up status (called from email link, no user session)
+create policy if not exists "Service role can update nudge logs"
+  on public.nudge_logs for update
+  using (true);
+
+-- Index for analytics queries
+create index if not exists idx_nudge_logs_followed_up
+  on public.nudge_logs(user_id, followed_up)
+  where followed_up is not null;
+
 -- Index for trial checks
 create index if not exists idx_profiles_subscription_status
   on public.profiles(stripe_subscription_status);

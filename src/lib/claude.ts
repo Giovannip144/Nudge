@@ -24,7 +24,12 @@ export interface NudgeMessage {
 }
 
 // ─── System prompt ────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are Nudge, an AI assistant that helps freelancers follow up with clients and leads.
+function buildSystemPrompt(channel: "email" | "whatsapp"): string {
+  const channelStyle = channel === "whatsapp"
+    ? `Channel: WhatsApp. Write like a friend casually texting — short, direct, no formalities. The kind of message a close friend would send you on WhatsApp. Lowercase is fine, contractions are good, keep it conversational and natural.`
+    : `Channel: Email. Write like a trusted colleague dropping you a quick note — warm but professional, complete sentences, natural pacing.`;
+
+  return `You are Nudge, an AI assistant that helps freelancers follow up with clients and leads.
 
 Your job: write a short, warm, actionable morning message telling the freelancer who to reach out to today and why.
 
@@ -37,12 +42,17 @@ Rules:
 - Never use corporate jargon, exclamation marks, or phrases like "Don't forget to" or "Make sure to".
 - Never say "I noticed" or "According to my data" — just state it naturally.
 - Write in English unless the note is clearly in another language.
+- Never use a dash (—) or hyphen (-) to connect parts of a sentence. Write full natural sentences instead.
+- Sound human. If someone read this without knowing it was AI-generated, they should have no idea.
+
+${channelStyle}
 
 The difference between a good nudge and a bad one:
 BAD: "You haven't contacted Daan in 21 days. Consider following up."
-GOOD: "Daan asked about your September availability three weeks ago and you haven't replied — a quick message today could secure that Q4 project."
+GOOD: "Daan asked about your September availability three weeks ago and you haven't replied. A quick message today could secure that Q4 project."
 
 Output format: plain text only. No markdown, no bullet points, no subject line.`;
+}
 
 // ─── Pick the best lead to nudge today ───────────────────────
 export function pickLeadToNudge(leads: LeadContext[]): LeadContext | null {
@@ -63,7 +73,8 @@ export function pickLeadToNudge(leads: LeadContext[]): LeadContext | null {
 // ─── Generate nudge via Claude API ───────────────────────────
 export async function generateNudgeMessage(
   userName: string,
-  lead:      LeadContext
+  lead:      LeadContext,
+  channel:   "email" | "whatsapp" = "email"
 ): Promise<NudgeMessage> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
@@ -83,7 +94,7 @@ export async function generateNudgeMessage(
     body: JSON.stringify({
       model:      "claude-sonnet-4-6",
       max_tokens: 250,
-      system:     SYSTEM_PROMPT,
+      system:     buildSystemPrompt(channel),
       messages:   [{ role: "user", content: userPrompt }],
     }),
   });
@@ -174,6 +185,7 @@ export interface DigestLead {
   lastContactDate:  string | null;
   status:           string;
   email:            string | null;
+  conversation?:    ConversationContext;
 }
 
 export interface DigestEntry {
@@ -205,12 +217,14 @@ Ranking logic (apply in this order):
 4. Leads where the note suggests a time-sensitive context
 
 Rules:
-- Be specific — reference what you actually know about each lead from their note
+- Be specific — reference what you actually know about each lead from their note or conversation history
+- When real email snippets are available for a lead, use them. Reference what was actually discussed, not just the note.
 - The reason must feel like something a smart colleague would say, not a CRM alert
-- The opening suggestion should be a real first sentence they can copy-paste
+- The opening suggestion should be a real first sentence they can copy-paste — make it feel like a human wrote it, not a tool
 - Never say "I noticed" or "According to the data"
-- Never use exclamation marks or corporate language
+- Never use exclamation marks, corporate language, or dashes to connect parts of a sentence
 - Write in English unless the note is in another language
+- Sound human. No one reading the output should suspect it was AI-generated.
 
 Output: valid JSON only. No markdown, no explanation outside the JSON.
 
@@ -313,6 +327,18 @@ function buildDigestPrompt(
     lines.push(`  Last contacted: ${l.lastContactDate ?? "never"}`);
     if (l.note) lines.push(`  Note: ${l.note}`);
     else        lines.push(`  Note: (none)`);
+
+    const snippets = l.conversation?.snippets;
+    if (snippets?.length) {
+      lines.push(`  Recent email conversation (${snippets.length} messages, oldest first):`);
+      const sorted = [...snippets].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      for (const s of sorted) {
+        const who = s.direction === "sent" ? `${userName} wrote` : `${l.name} wrote`;
+        lines.push(`    [${s.date}] ${who}: "${s.snippet}"`);
+      }
+    }
   }
 
   lines.push("");

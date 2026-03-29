@@ -6,6 +6,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { generateSundayDigest, type DigestLead } from "@/lib/claude";
 import { sendDigestEmail } from "@/lib/resend";
+import { getConversationContext, refreshAccessToken } from "@/lib/gmail";
 import { daysSince } from "@/lib/utils";
 
 export interface RunDigestResult {
@@ -20,7 +21,7 @@ export async function runDigestForUser(userId: string): Promise<RunDigestResult>
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, channel, phone, nudge_time")
+    .select("full_name, email, channel, phone, nudge_time, gmail_connected, gmail_access_token, gmail_refresh_token")
     .eq("id", userId)
     .single();
 
@@ -48,6 +49,36 @@ export async function runDigestForUser(userId: string): Promise<RunDigestResult>
     lastContactDate:  l.last_contact_at,
     status:           l.status,
   }));
+
+  // Enrich top leads with Gmail conversation context (max 3 leads to stay within rate limits)
+  if (profile.gmail_connected && profile.gmail_access_token) {
+    let accessToken = profile.gmail_access_token;
+    const leadsWithEmail = digestLeads.filter((l) => l.email).slice(0, 3);
+
+    for (const lead of leadsWithEmail) {
+      try {
+        const context = await getConversationContext(accessToken, lead.email!, 3)
+          .catch(async (err) => {
+            if (err.message === "GMAIL_UNAUTHORIZED" && profile.gmail_refresh_token) {
+              accessToken = await refreshAccessToken(profile.gmail_refresh_token);
+              await supabase.from("profiles").update({ gmail_access_token: accessToken }).eq("id", userId);
+              return getConversationContext(accessToken, lead.email!, 3);
+            }
+            throw err;
+          });
+
+        if (context.snippets.length > 0) {
+          lead.conversation = context;
+          console.log(`📧 Digest: fetched ${context.snippets.length} snippets for ${lead.name}`);
+        }
+      } catch {
+        // Non-fatal — this lead will use note-only context
+      }
+
+      // Respect Gmail rate limits between leads
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
 
   try {
     console.log(`📅 Generating Sunday digest for ${profile.full_name ?? profile.email} — ${digestLeads.length} leads`);

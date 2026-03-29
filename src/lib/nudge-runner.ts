@@ -117,13 +117,18 @@ export async function runNudgeForUser(userId: string): Promise<RunNudgeResult> {
 
   try {
     // 6. Generate contextual nudge via Claude
+    const useWhatsApp = channel === "whatsapp" && !!profile.phone;
+
     const nudgeMsg = await generateNudgeMessage(
       profile.full_name ?? profile.email?.split("@")[0] ?? "there",
-      leadToNudge
+      leadToNudge,
+      useWhatsApp ? "whatsapp" : "email"
     );
 
     // 7. Send via correct channel
-    const useWhatsApp = channel === "whatsapp" && !!profile.phone;
+
+    // Pre-generate log ID so we can embed it in the email for follow-up tracking
+    const logId = crypto.randomUUID();
 
     if (useWhatsApp) {
       await sendNudgeWhatsApp({
@@ -137,11 +142,13 @@ export async function runNudgeForUser(userId: string): Promise<RunNudgeResult> {
         userName:  profile.full_name ?? "there",
         nudge:     nudgeMsg,
         nudgeTime: profile.nudge_time?.slice(0, 5) ?? "08:30",
+        logId,
       });
     }
 
-    // 8. Log to nudge_logs
+    // 8. Log to nudge_logs (using the pre-generated ID)
     await supabase.from("nudge_logs").insert({
+      id:            logId,
       user_id:       userId,
       lead_id:       leadRecord?.id ?? null,
       type:          "daily",

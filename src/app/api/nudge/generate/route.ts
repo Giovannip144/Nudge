@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { runNudgeForUser } from "@/lib/nudge-runner";
+import { getConversationContext, refreshAccessToken } from "@/lib/gmail";
 
 /**
  * POST /api/nudge/generate
@@ -34,13 +35,13 @@ export async function POST(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email")
+    .select("full_name, email, gmail_connected, gmail_access_token, gmail_refresh_token")
     .eq("id", user.id)
     .single();
 
   const { data: leads } = await supabase
     .from("leads")
-    .select("name, note, status, last_contact_at")
+    .select("id, name, email, note, status, last_contact_at")
     .eq("user_id", user.id)
     .is("archived_at", null)
     .eq("nudge_active", true);
@@ -64,16 +65,39 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
   }
 
+  // Fetch Gmail conversation context for the preview (same as real nudge runner)
+  const leadRecord = leads.find((l) => l.name === lead.name);
+  if (profile?.gmail_connected && profile.gmail_access_token && leadRecord?.email) {
+    try {
+      let accessToken = profile.gmail_access_token;
+      const context = await getConversationContext(accessToken, leadRecord.email, 5)
+        .catch(async (err) => {
+          if (err.message === "GMAIL_UNAUTHORIZED" && profile.gmail_refresh_token) {
+            accessToken = await refreshAccessToken(profile.gmail_refresh_token);
+            await supabase.from("profiles").update({ gmail_access_token: accessToken }).eq("id", user.id);
+            return getConversationContext(accessToken, leadRecord.email!, 5);
+          }
+          throw err;
+        });
+      if (context.snippets.length > 0) {
+        lead.conversation = context;
+      }
+    } catch {
+      // Non-fatal — preview falls back to note-only
+    }
+  }
+
   const nudge = await generateNudgeMessage(
     profile?.full_name ?? "there",
     lead
   );
 
   return NextResponse.json({
-    preview: true,
-    lead:    lead.name,
-    subject: nudge.subject,
-    message: nudge.body,
-    urgency: nudge.urgency,
+    preview:    true,
+    lead:       lead.name,
+    subject:    nudge.subject,
+    message:    nudge.body,
+    urgency:    nudge.urgency,
+    contextual: nudge.hasConversationContext,
   });
 }

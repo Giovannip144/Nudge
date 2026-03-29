@@ -181,6 +181,33 @@ export async function getConversationContext(
   return { snippets, threadCount: uniqueThreads };
 }
 
+// ─── Check if user sent an email to a contact after a given timestamp ────────
+// Used by the follow-up detection cron to auto-track behavior.
+export async function checkIfEmailSentAfter(
+  accessToken:  string,
+  contactEmail: string,
+  afterDate:    Date
+): Promise<boolean> {
+  const afterEpochSec = Math.floor(afterDate.getTime() / 1000);
+
+  // Gmail query: sent TO this contact, after the nudge timestamp
+  const url = new URL("https://gmail.googleapis.com/gmail/v1/users/me/messages");
+  url.searchParams.set("q", `to:${contactEmail} after:${afterEpochSec} in:sent`);
+  url.searchParams.set("maxResults", "1");
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) throw new Error("GMAIL_UNAUTHORIZED");
+    return false;
+  }
+
+  const data = await res.json();
+  return (data.messages?.length ?? 0) > 0;
+}
+
 // ─── Scan all leads (date only) ───────────────────────────────
 export async function scanLeadsForUser(
   accessToken: string,
